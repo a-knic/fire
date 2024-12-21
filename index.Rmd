@@ -1,0 +1,79 @@
+---
+title: "index"
+author: "me"
+date: "2024-12-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setup
+
+```{r data_processing, echo=TRUE}
+if (!require("ggalluvial")) install.packages("ggalluvial")
+library(ggalluvial)
+library(dplyr)
+library(terra)
+library(reshape2)
+
+r1973 <- rast(r'(C:\Users\ainen\OneDrive\Desktop\PhD\SpatialData\LandCoverRasters\landcover_1973.tif)')
+r1995 <- rast(r'(C:\Users\ainen\OneDrive\Desktop\PhD\SpatialData\LandCoverRasters\landcover_1995.tif)')
+r2017 <- rast(r'(C:\Users\ainen\OneDrive\Desktop\PhD\SpatialData\LandCoverRasters\landcover_2017.tif)')
+
+
+# Create transition matrix
+transition_matrix <- crosstab(c(r1973, r2017))
+
+# Convert to data frame and check structure
+transitions_df <- as.data.frame(transition_matrix) 
+print(head(transitions_df))
+
+# Try creating from scratch
+trans_long <- data.frame(
+  class_1973 = as.vector(r1973),
+  class_2017 = as.vector(r2017)
+) %>%
+  group_by(class_1973, class_2017) %>%
+  summarise(count = n(), .groups = 'drop')
+
+
+# Define land cover class names
+lc_names <- c(
+  "1" = "Forest",
+  "2" = "Grassland", 
+  "3" = "Exotic trees",
+  "4" = "Tea plantation",
+  "5" = "Cane",
+  "6" = "Settlement",
+  "7" = "Agriculture",
+  "8" = "Water"
+)
+
+# Add class names
+transitions_df <- trans_long %>%
+  mutate(
+    from = factor(lc_names[as.character(class_1973)], levels = lc_names),
+    to = factor(lc_names[as.character(class_2017)], levels = lc_names)
+  )
+
+# Create color scheme
+lc_colors <- c(
+  "Forest" = "#2D5A27",        # Dark green
+  "Grassland" = "#8BA888",     # Sage green
+  "Exotic trees" = "#B87D4B",  # Brown
+  "Tea plantation" = "#9FA141", # Olive
+  "Cane" = "#5B8A72",         # Teal
+  "Settlement" = "#4A4E69",    # Slate blue
+  "Agriculture" = "#BC8034",   # Golden brown
+  "Water" = "#4B6E8F"         # Steel blue
+)
+
+# Convert counts to square kilometers 
+transitions_df <- transitions_df %>%
+  mutate(area_km2 = count * (30 * 30) / 1000000)  # Convert pixel count to km²
+
+```
+
+
