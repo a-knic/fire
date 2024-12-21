@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Setup
 
-```{r data_processing, echo=TRUE}
+```{r data_processing, echo=FALSE}
 if (!require("ggalluvial")) install.packages("ggalluvial")
 library(ggalluvial)
 library(dplyr)
